@@ -2,7 +2,7 @@
 # 										         #
 # FILE: decrypt.py								         #
 # 										         #
-# USAGE: python decrypt.py [-h] --input_file INPUT_FILE --output_dir OUTPUT_DIR	         #
+# USAGE: python decrypt.py [-h] INPUT_FILE OUTPUT_DIR	         #
 # 										         #
 # DESCRIPTION: Read a json file containing a block of transactions,               	 #
 #              decrypt the transactions using base64 api, and save the decrypted         #
@@ -47,7 +47,8 @@ def process_and_decrypt_transaction_data(input_file_path, output_dir):
         2: If the input file is not a valid JSON file.
         3: Invalid block file format.
         4: Output file directory not found or could not be created.
-        5: Failed to decode transaction.
+        5: Invalid output file directory.
+        6: Failed to decode transaction.
     """
     try:
         if not os.path.exists(input_file_path):
@@ -71,6 +72,9 @@ def process_and_decrypt_transaction_data(input_file_path, output_dir):
                 except OSError:
                     print("Output directory not found and could not be created.")
                     return 4
+            elif not os.path.isdir(args.output_dir):
+                print("Please provide a valid output directory.")
+                exit(5)
 
             output_file_path = os.path.join(
                 output_dir,
@@ -86,7 +90,7 @@ def process_and_decrypt_transaction_data(input_file_path, output_dir):
                     print(
                         f"Failed to decode transaction. Status code: {response.status_code}"
                     )
-                    return 5
+                    return 6
                 decoded_response = response.json()
                 output_transactions.append(decoded_response)
 
@@ -129,15 +133,19 @@ if __name__ == "__main__":
         description="Process and decrypt transaction data."
     )
     parser.add_argument(
-        "--input_file",
+        "input_file",
         type=str,
         help="The path to the input json file containing transaction data.",
     )
     parser.add_argument(
-        "--output_dir",
+        "output_dir",
         type=str,
         help="The path to the output json file to save the decrypted transactions. If not provided, the decoded data will be saved to a file with the same name as the input file, with '_decoded' appended to the end.",
     )
     args = parser.parse_args()
+    if not args.input_file or not os.path.exists(args.input_file):
+        # print help message if no arguments are provided
+        parser.print_help()
+        exit(0)
     return_code = process_and_decrypt_transaction_data(args.input_file, args.output_dir)
     exit(return_code)
